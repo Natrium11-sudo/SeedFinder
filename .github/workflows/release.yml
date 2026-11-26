@@ -58,6 +58,9 @@ jobs:
 
   windows:
     runs-on: windows-latest
+    env:
+      # vendored cubiomes uses GNU C constructs; MSVC cl.exe cannot compile it.
+      CC: clang
     steps:
       - uses: actions/checkout@v4
 
