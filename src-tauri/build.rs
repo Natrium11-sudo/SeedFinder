@@ -46,6 +46,11 @@ fn collect_c_sources(dir: &Path, out: &mut Vec<PathBuf>) {
             }
             collect_c_sources(&path, out);
         } else if path.extension().is_some_and(|ext| ext == "c") {
+            // `tests.c` is a standalone test runner, not part of the library.
+            // It includes POSIX headers that do not exist on Windows.
+            if path.file_name().is_some_and(|name| name == "tests.c") {
+                continue;
+            }
             out.push(path);
         }
     }
