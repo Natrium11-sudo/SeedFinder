@@ -1,0 +1,68 @@
+#ifndef PIECE_H_
+#define PIECE_H_
+
+#include "../finders.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static inline void rotPos(Pos3 bb0, Pos3 bb1, int *x, int *z, int rot) {
+    int posX, posZ;
+    switch (rot) {
+    case 0: posX = bb0.x + *x, posZ = bb1.z - *z; break;
+    case 1: posX = bb0.x + *z, posZ = bb0.z + *x; break;
+    case 2: posX = bb0.x + *x, posZ = bb0.z + *z; break;
+    case 3: posX = bb1.x - *z, posZ = bb0.z + *x; break;
+    default: UNREACHABLE();
+    }
+    *x = posX, *z = posZ;
+}
+
+static inline void generateBox(const Piece *p, int cx, int cz, int x0, int y0, int z0, int x1, int y1, int z1, int skipAir, RandomSource *rnd) {
+    if (!skipAir) {
+        int w = x1 - x0 + 1;
+        int d = z1 - z0 + 1;
+        int h = y1 - y0 + 1;
+        int skips = w * d * h;
+        if (!(w == 1 || d == 1 || h == 1)) {
+            skips -= (w - 2) * (d - 2) * (h - 2);
+        }
+        absSkipN(rnd, skips);
+        return;
+    }
+
+    const int height = y1 - y0 + 1;
+    if (height <= 0) {
+        return;
+    }
+    uint64_t skips = 0;
+    for (int x = x0; x <= x1; x++) {
+        for (int z = z0; z <= z1; z++) {
+            int tx = x, tz = z;
+            rotPos(p->bb0, p->bb1, &tx, &tz, p->rot);
+            if (tx >= cx && tx < cx + 16 && tz >= cz && tz < cz + 16) {
+                skips += x == x0 || x == x1 || z == z0 || z == z1 ? height : (height > 1 ? 2 : 1);
+            }
+        }
+    }
+    if (skips) {
+        absSkipN(rnd, skips);
+    }
+}
+
+ATTR(always_inline)
+static inline void generateMaybeBox(int x0, int y0, int z0, int x1, int y1, int z1, RandomSource *rnd) {
+    absSkipN(rnd, (y1-y0+1) * (x1-x0+1) * (z1-z0+1));
+}
+
+ATTR(always_inline)
+static inline void maybeGenerateBlock(RandomSource *rnd) {
+    absNextFloat(rnd);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //PIECE_H_

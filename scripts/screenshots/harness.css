@@ -1,0 +1,8 @@
+/* The screenshot is taken immediately after load, so the drawer must not be
+   captured while its slide-in animation is still running. */
+*,
+*::before,
+*::after {
+  animation: none !important;
+  transition: none !important;
+}
