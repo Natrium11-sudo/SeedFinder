@@ -32,12 +32,17 @@ jobs:
             librsvg2-dev \
             patchelf
 
-      - name: Build frontend and release tarball
+      - name: Build frontend, release tarball and AppImage
         run: |
           npm ci
           npm run build
           cargo build --release --manifest-path src-tauri/Cargo.toml
           bash scripts/build-release.sh
+          npx --yes "@tauri-apps/cli@^2" build --bundles appimage
+          mkdir -p release/appimage
+          cp src-tauri/target/release/bundle/appimage/*.AppImage release/appimage/
+          cd release/appimage
+          sha256sum *.AppImage > SHA256SUMS-appimage.txt
 
       - uses: actions/upload-artifact@v4
         with:
@@ -45,6 +50,7 @@ jobs:
           path: |
             release/seedfinder-*.tar.gz
             release/SHA256SUMS.txt
+            release/appimage/*
             release/README.md
             release/RELEASE_NOTES.md
             release/LICENSES.md
@@ -95,9 +101,13 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          draft: true
+          tag_name: v0.1.0
+          name: SeedFinder 0.1.0
+          draft: false
           body_path: dist/linux-release/RELEASE_NOTES.md
           files: |
+            dist/linux-release/appimage/*.AppImage
+            dist/linux-release/appimage/SHA256SUMS-appimage.txt
             dist/linux-release/*.tar.gz
             dist/linux-release/SHA256SUMS.txt
             dist/windows-release/*.exe

@@ -46,6 +46,17 @@ Saved seeds with names, notes and a one-click jump back to the map.
 
 ### Linux (x86_64)
 
+**AppImage (recommended):** download `SeedFinder_0.1.0_amd64.AppImage`, make it
+executable and run it. It needs FUSE 2 (`libfuse2` on Debian/Ubuntu); no
+installation is required.
+
+```bash
+chmod +x SeedFinder_0.1.0_amd64.AppImage
+./SeedFinder_0.1.0_amd64.AppImage
+```
+
+**Tarball:** extract the archive and run the user-level installer:
+
 ```bash
 tar -xzf seedfinder-0.1.0-linux-x86_64.tar.gz
 cd seedfinder-0.1.0-linux-x86_64
@@ -76,10 +87,11 @@ The Windows installer is produced by the included GitHub Actions workflow
 ## Verify a download
 
 ```bash
-sha256sum -c SHA256SUMS.txt
+sha256sum -c SHA256SUMS.txt                  # Linux tarball
+sha256sum -c SHA256SUMS-appimage.txt         # AppImage
+# Windows PowerShell:
+Get-FileHash .\SeedFinder_0.1.0_x64-setup.exe -Algorithm SHA256
 ```
-
-Windows: `Get-FileHash .\SeedFinder_0.1.0_x64-setup.exe -Algorithm SHA256`.
 
 ## Build from source
 
@@ -132,9 +144,9 @@ cargo fmt --check
 - Only Linux has been built and tested on this host; the Windows build is
   produced on Windows/CI and is not verified here.
 
-## Licenses
+## License
 
-cubiomes and its loot library are MIT-licensed. Map marker sprites come from
-the Minecraft Wiki and are Mojang property; they are bundled locally only.
-See `LICENSES.md` for the full texts. SeedFinder is not affiliated with Mojang
-or Microsoft.
+SeedFinder is MIT-licensed; see [LICENSE](LICENSE). Third-party notices and
+full license texts are in [release/LICENSES.md](release/LICENSES.md). Map
+marker sprites come from the Minecraft Wiki and are Mojang property; they are
+bundled locally only. SeedFinder is not affiliated with Mojang or Microsoft.

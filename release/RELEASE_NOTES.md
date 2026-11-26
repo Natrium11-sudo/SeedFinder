@@ -23,10 +23,16 @@ installation, no network access at runtime.
 
 | File | Contents |
 |---|---|
+| `SeedFinder_0.1.0_amd64.AppImage` | Portable Linux x86_64 application (needs FUSE 2) |
+| `SHA256SUMS-appimage.txt` | SHA-256 of the AppImage |
 | `seedfinder-0.1.0-linux-x86_64.tar.gz` | Program, icon, menu entry, installer, README with screenshots, licenses |
-| `SeedFinder_0.1.0_x64-setup.exe` | Windows installer (from the included GitHub Actions workflow or `scripts/build-windows.ps1`) |
 | `SHA256SUMS.txt` | SHA-256 of the Linux tarball |
+| `SeedFinder_0.1.0_x64-setup.exe` | Windows x86_64 NSIS installer |
 | `SHA256SUMS-windows.txt` | SHA-256 of the Windows installer |
+
+The source is MIT-licensed (see `LICENSE`); third-party notices are in
+`release/LICENSES.md`. Screenshots are embedded in `README.md` and bundled with
+the Linux tarball.
 
 Screenshots are in `release/screenshots/` in the repository and inside the
 Linux tarball.
