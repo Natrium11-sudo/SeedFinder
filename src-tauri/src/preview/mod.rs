@@ -160,8 +160,21 @@ pub fn build(request: &PreviewRequest) -> Result<PreviewData, String> {
     let (heights, biomes, min_height, max_height, sample_y) = match (layer, scale) {
         // Detail view of the surface: heights plus the biome at that height.
         (MapLayer::Surface, 4) => {
-            let grid = generator
+            let mut grid = generator
                 .height_grid(
+                    origin_block_x.div_euclid(4),
+                    origin_block_z.div_euclid(4),
+                    cells,
+                    cells,
+                )
+                .map_err(|err| err.to_string())?;
+            // `mapApproxHeight()` samples its biome ids at the approximated
+            // surface height (around Y 60-100), where 1.18+ cave biomes live.
+            // The surface layer must show the top-down biome instead, just
+            // like the coarse layers do.
+            grid.biomes = generator
+                .biome_grid(
+                    4,
                     origin_block_x.div_euclid(4),
                     origin_block_z.div_euclid(4),
                     cells,
@@ -501,6 +514,24 @@ mod tests {
         assert_eq!(data.layer, "surface");
         assert_eq!(data.sample_y, 300);
         assert!(data.heights.is_empty());
+    }
+
+    #[test]
+    fn surface_detail_hides_cave_biomes() {
+        let data = build(&request(128, 4)).expect("surface preview must generate");
+        assert_eq!(data.sample_y, 300);
+        assert!(!data.heights.is_empty(), "surface keeps hillshade heights");
+        let names: Vec<&str> = data
+            .legend
+            .iter()
+            .map(|entry| entry.name.as_str())
+            .collect();
+        assert!(
+            !names
+                .iter()
+                .any(|name| name.contains("caves") || *name == "deep_dark"),
+            "surface layer leaked cave biomes: {names:?}"
+        );
     }
 
     #[test]

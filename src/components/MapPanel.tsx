@@ -577,7 +577,9 @@ export function MapPanel({
                         aria-hidden="true"
                       />
                     )}
-                    <span>{structure.label}</span>
+                    <span className="structure-label" title={structure.label}>
+                      {structure.label}
+                    </span>
                   </label>
                 );
               })}
