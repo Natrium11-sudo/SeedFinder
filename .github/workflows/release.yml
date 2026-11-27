@@ -104,8 +104,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          tag_name: v0.2.1
-          name: SeedFinder 0.2.1
+          tag_name: v0.2.2
+          name: SeedFinder 0.2.2
           draft: false
           body_path: dist/linux-release/RELEASE_NOTES.md
           files: |

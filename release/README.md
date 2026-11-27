@@ -10,8 +10,8 @@ The end-user README with screenshots lives at [`../README.md`](../README.md).
 
 | File | Purpose | Upload to GitHub? |
 |---|---|---|
-| `seedfinder-0.2.1-linux-x86_64.tar.gz` | Program, icon, menu entry, `install.sh`, README, screenshots, licenses | yes |
-| `windows/SeedFinder_0.2.1_x64-setup.exe` | Windows installer, built on Windows or by CI | yes |
+| `seedfinder-0.2.2-linux-x86_64.tar.gz` | Program, icon, menu entry, `install.sh`, README, screenshots, licenses | yes |
+| `windows/SeedFinder_0.2.2_x64-setup.exe` | Windows installer, built on Windows or by CI | yes |
 | `SHA256SUMS.txt` | SHA-256 of the Linux tarball | yes |
 | `windows/SHA256SUMS-windows.txt` | SHA-256 of the Windows installer | yes |
 | `RELEASE_NOTES.md` | Text for the release body (Markdown) | no, paste it into the form |
@@ -24,11 +24,11 @@ so the installer itself cannot be produced here; see below.
 
 ## Publish a release
 
-1. Tag and push, e.g. `v0.2.1`.
-2. GitHub → Releases → “Draft a new release”: tag `v0.2.1`, title
-   `SeedFinder 0.2.1`.
+1. Tag and push, e.g. `v0.2.2`.
+2. GitHub → Releases → “Draft a new release”: tag `v0.2.2`, title
+   `SeedFinder 0.2.2`.
 3. Paste the content of `RELEASE_NOTES.md` into the release body.
-4. Attach `seedfinder-0.2.1-linux-x86_64.tar.gz`, `SHA256SUMS.txt`, and the
+4. Attach `seedfinder-0.2.2-linux-x86_64.tar.gz`, `SHA256SUMS.txt`, and the
    Windows installer with its checksum file.
 
 The included workflow (`.github/workflows/release.yml`) does steps 1–4 for you:

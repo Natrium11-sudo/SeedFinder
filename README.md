@@ -53,20 +53,20 @@ Saved seeds with names, notes and a one-click jump back to the map.
 
 ### Linux (x86_64)
 
-**AppImage (recommended):** download `SeedFinder_0.2.1_amd64.AppImage`, make it
+**AppImage (recommended):** download `SeedFinder_0.2.2_amd64.AppImage`, make it
 executable and run it. It needs FUSE 2 (`libfuse2` on Debian/Ubuntu); no
 installation is required.
 
 ```bash
-chmod +x SeedFinder_0.2.1_amd64.AppImage
-./SeedFinder_0.2.1_amd64.AppImage
+chmod +x SeedFinder_0.2.2_amd64.AppImage
+./SeedFinder_0.2.2_amd64.AppImage
 ```
 
 **Tarball:** extract the archive and run the user-level installer:
 
 ```bash
-tar -xzf seedfinder-0.2.1-linux-x86_64.tar.gz
-cd seedfinder-0.2.1-linux-x86_64
+tar -xzf seedfinder-0.2.2-linux-x86_64.tar.gz
+cd seedfinder-0.2.2-linux-x86_64
 ./install.sh
 ```
 
@@ -84,7 +84,7 @@ Debian/Ubuntu `libwebkit2gtk-4.1-0 libgtk-3-0 libsoup-3.0-0`, Fedora
 
 ### Windows (x86_64)
 
-Run `SeedFinder_0.2.1_x64-setup.exe` and follow the installer. Windows 10/11
+Run `SeedFinder_0.2.2_x64-setup.exe` and follow the installer. Windows 10/11
 with the WebView2 runtime (included in current Windows builds).
 
 The Windows installer is produced by the included GitHub Actions workflow
@@ -97,7 +97,7 @@ The Windows installer is produced by the included GitHub Actions workflow
 sha256sum -c SHA256SUMS.txt                  # Linux tarball
 sha256sum -c SHA256SUMS-appimage.txt         # AppImage
 # Windows PowerShell:
-Get-FileHash .\SeedFinder_0.2.1_x64-setup.exe -Algorithm SHA256
+Get-FileHash .\SeedFinder_0.2.2_x64-setup.exe -Algorithm SHA256
 ```
 
 ## Build from source
