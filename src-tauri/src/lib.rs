@@ -11,7 +11,7 @@ use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, State};
 
-use engine::catalog::{BiomeInfo, StructureInfo};
+use engine::catalog::{BiomeInfo, PortalSeed, StructureInfo};
 use engine::generator::SeedGenerator;
 use engine::rules::Rule;
 use engine::seed_iter::{self, ScanPlan};
@@ -51,6 +51,12 @@ fn structure_catalog(version: String) -> Result<Vec<StructureInfo>, String> {
     let profile =
         version::by_id(&version).ok_or_else(|| format!("Unknown version: {version}"))?;
     Ok(engine::catalog::structures(profile.mc))
+}
+
+/// Verified seeds with a fully populated end portal.
+#[tauri::command]
+fn portal_seed_presets() -> Vec<PortalSeed> {
+    engine::catalog::PORTAL_SEEDS.to_vec()
 }
 
 /// Spawn data for one seed, without any rule filtering.
@@ -212,6 +218,7 @@ pub fn run() {
             version_catalog,
             biome_catalog,
             structure_catalog,
+            portal_seed_presets,
             seed_info,
             search_start,
             search_stop,

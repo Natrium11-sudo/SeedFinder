@@ -21,6 +21,18 @@ const DIM_OVERWORLD: i32 = 0;
 /// Generator flag bits: no large biomes, no forced ocean variants.
 const NO_FLAGS: u32 = 0;
 
+/// State of the best end portal found in a seed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PortalInfo {
+    /// Number of eyes already placed (0-12) in the portal room.
+    pub eyes: u8,
+    /// Whether the portal is already active (cubiomes bit 12).
+    pub lit: bool,
+    /// Stronghold position (block coordinates).
+    pub x: i32,
+    pub z: i32,
+}
+
 /// Errors surfaced by the generator wrapper.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EngineError {
@@ -338,6 +350,35 @@ impl SeedGenerator {
             )
         };
         (found == 1).then_some((x, z))
+    }
+
+    /// Best end portal among the first `max_strongholds` strongholds.
+    ///
+    /// Generating stronghold pieces is expensive (~0.1-1 ms per stronghold),
+    /// so callers should keep `max_strongholds` small and run this check last.
+    #[must_use]
+    pub fn portal_eyes(&self, max_strongholds: u8) -> Option<PortalInfo> {
+        let mut eyes = 0;
+        let mut lit = 0;
+        let mut x = 0;
+        let mut z = 0;
+        // SAFETY: generator is initialized; all out-pointers are valid.
+        let found = unsafe {
+            ffi::sf_portal_eyes(
+                self.generator.as_ptr(),
+                i32::from(max_strongholds.clamp(1, 16)),
+                &mut eyes,
+                &mut lit,
+                &mut x,
+                &mut z,
+            )
+        };
+        (found == 1).then_some(PortalInfo {
+            eyes: eyes as u8,
+            lit: lit != 0,
+            x,
+            z,
+        })
     }
 
     /// Samples a biome grid at a native cubiomes scale (4, 16 or 64).

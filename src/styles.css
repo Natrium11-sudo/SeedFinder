@@ -386,6 +386,43 @@ input[type="range"] {
   opacity: 0.45;
 }
 
+.btn-secondary {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  padding: 9px 14px;
+  font-weight: 600;
+  transition: background 120ms ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--paper-deep, rgba(0, 0, 0, 0.05));
+}
+
+.btn-secondary:disabled {
+  opacity: 0.45;
+}
+
+.portal-warning {
+  border-left: 3px solid var(--gold, #b8860b);
+  padding-left: 8px;
+  color: var(--ink);
+}
+
+.portal-seeds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  margin-top: 8px;
+}
+
+.portal-seeds .link {
+  font-size: 0.72rem;
+}
+
 .block-head {
   display: flex;
   align-items: baseline;

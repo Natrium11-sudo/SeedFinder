@@ -1,4 +1,10 @@
-import type { BiomeInfo, RuleState, StructureInfo } from "../types";
+import type {
+  BiomeInfo,
+  KnownPortalSeed,
+  RuleState,
+  StructureInfo,
+  SurfaceCategory,
+} from "../types";
 import { structureIconUrl } from "../lib/structureIcons";
 import { BiomePicker } from "./BiomePicker";
 
@@ -7,6 +13,8 @@ interface RuleBuilderProps {
   onChange: (next: RuleState) => void;
   biomes: BiomeInfo[];
   structures: StructureInfo[];
+  portalSeeds: KnownPortalSeed[];
+  onUseSeed: (seed: string, version: string) => void;
   disabled?: boolean;
 }
 
@@ -15,6 +23,8 @@ export function RuleBuilder({
   onChange,
   biomes,
   structures,
+  portalSeeds,
+  onUseSeed,
   disabled = false,
 }: RuleBuilderProps) {
   const patch = (part: Partial<RuleState>) => onChange({ ...state, ...part });
@@ -346,6 +356,136 @@ export function RuleBuilder({
         )}
       </section>
 
+      <section className={state.spawnSurface !== "any" ? "rule is-on" : "rule"}>
+        <label className="field">
+          <span>Spawn surface (approximate)</span>
+          <select
+            value={state.spawnSurface}
+            onChange={(event) =>
+              patch({ spawnSurface: event.currentTarget.value as SurfaceCategory | "any" })
+            }
+            disabled={disabled}
+          >
+            <option value="any">Any surface</option>
+            <option value="grass">Grass-like</option>
+            <option value="sand">Sand / desert</option>
+            <option value="snow">Snow / ice</option>
+            <option value="stone">Stone / mountains</option>
+            <option value="water">Water / ocean</option>
+          </select>
+        </label>
+        <p className="rule-hint">
+          Approximate only: derived from the biome at spawn. Cubiomes does not
+          expose individual block ids, so this cannot identify an exact block.
+        </p>
+      </section>
+
+      <section className={state.portal.enabled ? "rule is-on" : "rule"}>
+        <label className="switch">
+          <input
+            type="checkbox"
+            checked={state.portal.enabled}
+            onChange={(event) =>
+              patch({
+                portal: { ...state.portal, enabled: event.currentTarget.checked },
+              })
+            }
+            disabled={disabled}
+          />
+          <span>End portal eyes</span>
+        </label>
+
+        {state.portal.enabled && (
+          <div className="rule-body">
+            <label className="field">
+              <span>Minimum eyes: {state.portal.minEyes} / 12</span>
+              <input
+                type="range"
+                min={1}
+                max={12}
+                step={1}
+                value={state.portal.minEyes}
+                onChange={(event) =>
+                  patch({
+                    portal: {
+                      ...state.portal,
+                      minEyes: Number(event.currentTarget.value),
+                    },
+                  })
+                }
+                disabled={disabled}
+              />
+            </label>
+            <div className="field-row">
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={state.portal.requireLit}
+                  onChange={(event) =>
+                    patch({
+                      portal: {
+                        ...state.portal,
+                        requireLit: event.currentTarget.checked,
+                      },
+                    })
+                  }
+                  disabled={disabled}
+                />
+                <span>Portal must be active</span>
+              </label>
+              <label className="field">
+                <span>Strongholds to check</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={8}
+                  value={state.portal.maxStrongholds}
+                  onChange={(event) =>
+                    patch({
+                      portal: {
+                        ...state.portal,
+                        maxStrongholds: clampInt(
+                          event.currentTarget.value,
+                          1,
+                          8,
+                          state.portal.maxStrongholds,
+                        ),
+                      },
+                    })
+                  }
+                  disabled={disabled}
+                />
+              </label>
+            </div>
+            <p className="rule-hint">
+              Rare: 4+ eyes ≈ 1 in 47 seeds, 5+ ≈ 1 in 231, 6+ ≈ 1 in 1,848.
+              This rule runs last because each stronghold is expensive.
+            </p>
+            {state.portal.minEyes >= 12 && (
+              <div className="rule-hint portal-warning">
+                12 eyes occur about once per trillion seeds – a random scan will
+                not find one. Use a verified seed below, or lower the threshold
+                to search for a partial portal.
+              </div>
+            )}
+            <div className="portal-seeds">
+              {portalSeeds.map((preset) => (
+                <button
+                  key={`${preset.version}:${preset.seed}`}
+                  type="button"
+                  className="link"
+                  onClick={() => onUseSeed(preset.seed, preset.version)}
+                  disabled={disabled}
+                  title={`${preset.label} (Minecraft ${preset.version})`}
+                >
+                  {preset.seed} · {preset.version}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
       <button
         type="button"
         className="link reset"
@@ -356,6 +496,8 @@ export function RuleBuilder({
             coord: { ...state.coord, enabled: false, biomes: [] },
             structure: { ...state.structure, enabled: false, kinds: [] },
             island: { ...state.island, enabled: false },
+            spawnSurface: "any",
+            portal: { ...state.portal, enabled: false },
           })
         }
         disabled={disabled}

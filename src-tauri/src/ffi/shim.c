@@ -14,6 +14,7 @@
 #include "biomes.h"
 #include "finders.h"
 #include "generator.h"
+#include "stronghold.h"
 #include "util.h"
 
 void *sf_gen_new(int mc, uint32_t flags)
@@ -322,4 +323,91 @@ int sf_strongholds(const void *gen, int x0, int z0, int x1, int z1,
 int sf_slime_chunk(uint64_t seed, int chunk_x, int chunk_z)
 {
     return isSlimeChunk(seed, chunk_x, chunk_z);
+}
+
+/*
+ * Best end portal among the first `max_strongholds` strongholds.
+ *
+ * cubiomes writes the portal room eye state into Piece.additionalData:
+ * bits 0..11 = eyes already placed, bit 12 = portal is lit (any colliding
+ * chunk passed the twelve-eye check). All cubiomes structs stay on the C side.
+ *
+ * Returns 1 when a portal room was found and writes the eye count, lit flag
+ * and the stronghold position; 0 otherwise.
+ */
+int sf_portal_eyes(const void *gen, int max_strongholds,
+    int *out_eyes, int *out_lit, int *out_x, int *out_z)
+{
+    const Generator *g = (const Generator *)gen;
+    if (g == NULL || max_strongholds <= 0)
+        return 0;
+
+    StructureSaltConfig ssconf;
+    if (!getStructureSaltConfig(Stronghold, g->mc, -1, &ssconf))
+        return 0;
+
+    /* 400 pieces are enough for any realistic stronghold (cubiomes docs). */
+    Piece *pieces = (Piece *)calloc(400, sizeof(Piece));
+    if (pieces == NULL)
+        return 0;
+
+    StrongholdIter sh;
+    initFirstStronghold(&sh, g->mc, g->seed);
+
+    int best_eyes = -1;
+    int best_lit = 0;
+    int best_x = 0;
+    int best_z = 0;
+
+    for (int i = 0; i < max_strongholds; ++i)
+    {
+        int remaining = nextStronghold(&sh, (Generator *)g);
+        StructureVariant sv;
+        memset(&sv, 0, sizeof(sv));
+
+        int count = getStructurePieces(pieces, 400, Stronghold, ssconf, &sv,
+            g->mc, g->seed, sh.pos.x, sh.pos.z);
+        if (count > 0)
+        {
+            for (int j = 0; j < count; ++j)
+            {
+                Piece *p = &pieces[j];
+                if (p->type != SH_PORTAL_ROOM)
+                    continue;
+
+                int eyes = 0;
+                for (int bit = 0; bit < 12; ++bit)
+                    if (p->additionalData & (1 << bit))
+                        eyes++;
+                int lit = (p->additionalData & (1 << 12)) != 0;
+
+                if (eyes > best_eyes || (eyes == best_eyes && lit && !best_lit))
+                {
+                    best_eyes = eyes;
+                    best_lit = lit;
+                    best_x = sh.pos.x;
+                    best_z = sh.pos.z;
+                }
+            }
+        }
+
+        if (best_eyes == 12 && best_lit)
+            break;
+        if (remaining <= 0)
+            break;
+    }
+
+    free(pieces);
+    if (best_eyes < 0)
+        return 0;
+
+    if (out_eyes != NULL)
+        *out_eyes = best_eyes;
+    if (out_lit != NULL)
+        *out_lit = best_lit;
+    if (out_x != NULL)
+        *out_x = best_x;
+    if (out_z != NULL)
+        *out_z = best_z;
+    return 1;
 }

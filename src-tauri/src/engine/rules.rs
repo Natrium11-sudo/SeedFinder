@@ -35,6 +35,30 @@ pub enum Rule {
     /// The spawn sits on a landmass that is surrounded by water within
     /// `radius` blocks (an island start).
     IslandSpawn { radius: u32 },
+    /// Approximate surface category at the spawn, derived from biome and
+    /// height. Cubiomes has no block ids, so this is intentionally coarse.
+    SpawnSurface { category: SurfaceCategory },
+    /// End portal eye count in one of the first strongholds.
+    ///
+    /// Twelve eyes occur roughly once per trillion seeds, so brute-forcing
+    /// this is impractical; the UI offers verified seeds for that case.
+    PortalEyes {
+        min_eyes: u8,
+        require_lit: bool,
+        max_strongholds: u8,
+        radius: u32,
+    },
+}
+
+/// Coarse surface category at the spawn point.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SurfaceCategory {
+    Grass,
+    Sand,
+    Snow,
+    Stone,
+    Water,
 }
 
 impl Rule {
@@ -48,6 +72,8 @@ impl Rule {
             } => !biome.is_empty() && *min_share > 0.0,
             Self::StructureNear { structures, .. } => !structures.is_empty(),
             Self::IslandSpawn { .. } => true,
+            Self::SpawnSurface { .. } => true,
+            Self::PortalEyes { min_eyes, .. } => *min_eyes > 0,
         }
     }
 
@@ -55,9 +81,11 @@ impl Rule {
         match self {
             Self::BiomeAt { .. } => 0,
             Self::SpawnBiome { .. } => 1,
-            Self::IslandSpawn { .. } => 2,
-            Self::SpawnArea { .. } => 3,
-            Self::StructureNear { .. } => 4,
+            Self::SpawnSurface { .. } => 2,
+            Self::IslandSpawn { .. } => 3,
+            Self::SpawnArea { .. } => 4,
+            Self::StructureNear { .. } => 5,
+            Self::PortalEyes { .. } => 6,
         }
     }
 }
@@ -167,6 +195,21 @@ pub fn evaluate(
                     "Island spawn: water within {radius} blocks"
                 ));
             }
+            Rule::SpawnSurface { category } => {
+                let (x, z) = spawn_of(generator, &mut spawn)?;
+                let id = generator.biome_at(
+                    4,
+                    x.div_euclid(4),
+                    generator.version().surface_y(),
+                    z.div_euclid(4),
+                )?;
+                let name = biome_name(generator, id)?;
+                let found = surface_category(&name);
+                if found != *category {
+                    return Ok(None);
+                }
+                matched.push(format!("Spawn surface (approx.): {found:?}"));
+            }
             Rule::StructureNear {
                 structures: kinds,
                 radius,
@@ -202,6 +245,38 @@ pub fn evaluate(
                     x: sx,
                     z: sz,
                 });
+            }
+            Rule::PortalEyes {
+                min_eyes,
+                require_lit,
+                max_strongholds,
+                radius,
+            } => {
+                // This is the most expensive rule; it runs last and rejects
+                // early before any piece generation for the common case.
+                if *min_eyes > 12 {
+                    return Ok(None);
+                }
+                let Some(portal) = generator.portal_eyes(*max_strongholds) else {
+                    return Ok(None);
+                };
+                if portal.eyes < *min_eyes || (*require_lit && !portal.lit) {
+                    return Ok(None);
+                }
+                if *radius > 0 {
+                    let (sx, sz) = spawn_of(generator, &mut spawn)?;
+                    let distance = portal.x.abs_diff(sx) as u64 + portal.z.abs_diff(sz) as u64;
+                    if distance > u64::from(*radius) {
+                        return Ok(None);
+                    }
+                }
+                matched.push(format!(
+                    "End portal: {}/12 eyes{} at ({}, {})",
+                    portal.eyes,
+                    if portal.lit { ", active" } else { "" },
+                    portal.x,
+                    portal.z
+                ));
             }
         }
     }
@@ -241,6 +316,35 @@ fn spawn_of(generator: &SeedGenerator, cache: &mut Option<Spawn>) -> Result<Spaw
 
 fn biome_name(generator: &SeedGenerator, id: i32) -> Result<String, EngineError> {
     catalog::biome_name(generator.version(), id).ok_or(EngineError::UnknownBiome { id })
+}
+
+/// Coarse category from the biome name. Cubiomes provides neither block ids
+/// nor a height sampler usable from a shared reference, so this is an
+/// approximation and is labelled as such in the UI.
+fn surface_category(biome: &str) -> SurfaceCategory {
+    let name = biome.to_ascii_lowercase();
+    if name.contains("ocean") || name.contains("river") {
+        return SurfaceCategory::Water;
+    }
+    if ["snow", "ice", "frozen", "glacier"]
+        .iter()
+        .any(|part| name.contains(part))
+    {
+        return SurfaceCategory::Snow;
+    }
+    if ["sand", "beach", "desert"]
+        .iter()
+        .any(|part| name.contains(part))
+    {
+        return SurfaceCategory::Sand;
+    }
+    if ["mountain", "peak", "hills", "stony", "crag", "gravel", "cave", "badlands"]
+        .iter()
+        .any(|part| name.contains(part))
+    {
+        return SurfaceCategory::Stone;
+    }
+    SurfaceCategory::Grass
 }
 
 /// True when the spawn point is land that is fully enclosed by water within

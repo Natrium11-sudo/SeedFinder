@@ -27,12 +27,29 @@ export interface StructureInfo {
   label: string;
 }
 
+export type SurfaceCategory = "grass" | "sand" | "snow" | "stone" | "water";
+
+/** A verified seed with a fully populated end portal (string: 64-bit safe). */
+export interface KnownPortalSeed {
+  version: string;
+  seed: string;
+  label: string;
+}
+
 export type Rule =
   | { kind: "biome_at"; x: number; z: number; any_of: string[] }
   | { kind: "spawn_biome"; any_of: string[] }
   | { kind: "spawn_area"; biome: string; radius: number; min_share: number }
   | { kind: "structure_near"; structures: string[]; radius: number }
-  | { kind: "island_spawn"; radius: number };
+  | { kind: "island_spawn"; radius: number }
+  | { kind: "spawn_surface"; category: SurfaceCategory }
+  | {
+      kind: "portal_eyes";
+      min_eyes: number;
+      require_lit: boolean;
+      max_strongholds: number;
+      radius: number;
+    };
 
 export interface StructureHit {
   kind: string;
@@ -142,6 +159,15 @@ export interface RuleState {
     enabled: boolean;
     radius: number;
   };
+  /** Approximate spawn surface; "any" leaves the rule inactive. */
+  spawnSurface: SurfaceCategory | "any";
+  portal: {
+    enabled: boolean;
+    minEyes: number;
+    requireLit: boolean;
+    maxStrongholds: number;
+    radius: number;
+  };
 }
 
 export function buildRules(state: RuleState): Rule[] {
@@ -176,6 +202,18 @@ export function buildRules(state: RuleState): Rule[] {
   if (state.island.enabled) {
     rules.push({ kind: "island_spawn", radius: state.island.radius });
   }
+  if (state.spawnSurface !== "any") {
+    rules.push({ kind: "spawn_surface", category: state.spawnSurface });
+  }
+  if (state.portal.enabled) {
+    rules.push({
+      kind: "portal_eyes",
+      min_eyes: state.portal.minEyes,
+      require_lit: state.portal.requireLit,
+      max_strongholds: state.portal.maxStrongholds,
+      radius: state.portal.radius,
+    });
+  }
 
   return rules;
 }
@@ -186,4 +224,12 @@ export const emptyRuleState: RuleState = {
   coord: { enabled: false, x: 0, z: 0, biomes: [] },
   structure: { enabled: false, kinds: [], radius: 1024 },
   island: { enabled: false, radius: 512 },
+  spawnSurface: "any",
+  portal: {
+    enabled: false,
+    minEyes: 4,
+    requireLit: false,
+    maxStrongholds: 1,
+    radius: 0,
+  },
 };

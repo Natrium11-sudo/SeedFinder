@@ -189,6 +189,52 @@ pub fn structures(mc: McVersion) -> Vec<StructureInfo> {
         .collect()
 }
 
+/// A verified seed with a fully populated end portal.
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct PortalSeed {
+    pub version: &'static str,
+    /// Decimal string: 64-bit seeds exceed JavaScript's safe integer range.
+    pub seed: &'static str,
+    pub label: &'static str,
+}
+
+/// Verified with `portal_eyes()`: each has 12/12 eyes and an active portal.
+///
+/// A twelve-eye portal occurs about once per trillion seeds, so random scans
+/// cannot find one. These are offered as inspectable presets instead.
+pub const PORTAL_SEEDS: &[PortalSeed] = &[
+    PortalSeed {
+        version: "1.16.5",
+        seed: "-4530634556500121041",
+        label: "12-eye portal near spawn",
+    },
+    PortalSeed {
+        version: "1.21.1",
+        seed: "-2627568906264457629",
+        label: "12-eye portal near spawn",
+    },
+    PortalSeed {
+        version: "1.21.1",
+        seed: "6027786629280759191",
+        label: "12-eye portal near spawn",
+    },
+    PortalSeed {
+        version: "1.21.4",
+        seed: "-2627568906264457629",
+        label: "12-eye portal near spawn",
+    },
+    PortalSeed {
+        version: "1.21.4",
+        seed: "6027786629280759191",
+        label: "12-eye portal near spawn",
+    },
+    PortalSeed {
+        version: "1.21.4",
+        seed: "2040984539113960933",
+        label: "12-eye portal near spawn",
+    },
+];
+
 /// `old_growth_pine_taiga` -> `Old Growth Pine Taiga`.
 #[must_use]
 pub fn prettify(name: &str) -> String {

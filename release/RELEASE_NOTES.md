@@ -1,4 +1,4 @@
-# SeedFinder 0.1.0
+# SeedFinder 0.2.0
 
 Find Minecraft Java seeds locally – a Chunkbase-style map and your own rules,
 with a multithreaded search over random 64-bit seeds. No cloud, no Minecraft
@@ -14,6 +14,9 @@ installation, no network access at runtime.
   igloos, portals, ancient cities, trial chambers, camps, shipwrecks and
   treasure – each type individually toggled on the map, plus strongholds and
   slime chunks.
+- **New rules:** approximate spawn surface category and end portal eye count,
+  with 4+/5+/6+ eye searches and verified 12-eye seed presets for the
+  single-seed checker.
 - **Coordinates and seeds copy in one click:** spawn coordinates, the position
   under the cursor, and the seed itself.
 - **English UI**, all fonts bundled locally.
@@ -23,11 +26,11 @@ installation, no network access at runtime.
 
 | File | Contents |
 |---|---|
-| `SeedFinder_0.1.0_amd64.AppImage` | Portable Linux x86_64 application (needs FUSE 2) |
+| `SeedFinder_0.2.0_amd64.AppImage` | Portable Linux x86_64 application (needs FUSE 2) |
 | `SHA256SUMS-appimage.txt` | SHA-256 of the AppImage |
-| `seedfinder-0.1.0-linux-x86_64.tar.gz` | Program, icon, menu entry, installer, README with screenshots, licenses |
+| `seedfinder-0.2.0-linux-x86_64.tar.gz` | Program, icon, menu entry, installer, README with screenshots, licenses |
 | `SHA256SUMS.txt` | SHA-256 of the Linux tarball |
-| `SeedFinder_0.1.0_x64-setup.exe` | Windows x86_64 NSIS installer |
+| `SeedFinder_0.2.0_x64-setup.exe` | Windows x86_64 NSIS installer |
 | `SHA256SUMS-windows.txt` | SHA-256 of the Windows installer |
 
 The source is MIT-licensed (see `LICENSE`); third-party notices are in
@@ -40,8 +43,8 @@ Linux tarball.
 ## Install (Linux x86_64)
 
 ```bash
-tar -xzf seedfinder-0.1.0-linux-x86_64.tar.gz
-cd seedfinder-0.1.0-linux-x86_64
+tar -xzf seedfinder-0.2.0-linux-x86_64.tar.gz
+cd seedfinder-0.2.0-linux-x86_64
 ./install.sh
 ```
 
@@ -66,7 +69,7 @@ WebView2 runtime (included in current Windows builds).
 sha256sum -c SHA256SUMS.txt
 ```
 
-Windows: `Get-FileHash .\SeedFinder_0.1.0_x64-setup.exe -Algorithm SHA256`.
+Windows: `Get-FileHash .\SeedFinder_0.2.0_x64-setup.exe -Algorithm SHA256`.
 
 **Linux requirements:** x86_64 Linux with glibc plus WebKitGTK 4.1, GTK 3 and
 libsoup 3 – Debian/Ubuntu `libwebkit2gtk-4.1-0 libgtk-3-0 libsoup-3.0-0`,

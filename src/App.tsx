@@ -11,6 +11,7 @@ import {
   buildRules,
   emptyRuleState,
   type BiomeInfo,
+  type KnownPortalSeed,
   type PreviewData,
   type RuleState,
   type SavedSeed,
@@ -45,6 +46,7 @@ export default function App() {
   const [version, setVersion] = useState(DEFAULT_VERSION);
   const [biomes, setBiomes] = useState<BiomeInfo[]>([]);
   const [structures, setStructures] = useState<StructureInfo[]>([]);
+  const [portalSeeds, setPortalSeeds] = useState<KnownPortalSeed[]>([]);
   const [rules, setRules] = useState<RuleState>({ ...emptyRuleState });
 
   const [mode, setMode] = useState<"scan" | "seed">("scan");
@@ -89,6 +91,59 @@ export default function App() {
 
   const activeSeed = selectedSeed ?? checkedSeed;
 
+  /** Load a verified 12-eye seed into the single-seed checker. */
+  const usePortalSeed = useCallback((seed: string, presetVersion: string) => {
+    setVersion(presetVersion);
+    setSeedInput(seed);
+    setMode("seed");
+    selectSeed(null);
+    setCheckedSeed(seed);
+    setHits([]);
+    setProgress(EMPTY_PROGRESS);
+    setRules((current) => ({
+      ...current,
+      portal: {
+        enabled: true,
+        minEyes: 12,
+        requireLit: true,
+        maxStrongholds: 8,
+        radius: 0,
+      },
+    }));
+    setNotice(
+      `Loaded verified seed ${seed} (Minecraft ${presetVersion}). Press “Check against rules” to confirm all 12 eyes.`,
+    );
+  }, [selectSeed]);
+
+  /** Check the typed seed against the active rules without scanning random seeds. */
+  const checkSeedRules = useCallback(async () => {
+    const raw = seedInput.trim();
+    if (!/^-?\d+$/.test(raw)) {
+      setError("Enter a whole-number seed, e.g. 3055141959546.");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setHits([]);
+    selectSeed(null);
+    setCheckedSeed(raw);
+    try {
+      setRunning(true);
+      await invoke("search_start", {
+        request: {
+          version,
+          rules: buildRules(rules),
+          maxSeeds: 1,
+          threads: 1,
+          seed: raw,
+        },
+      });
+    } catch (cause) {
+      setError(String(cause));
+      setRunning(false);
+    }
+  }, [rules, seedInput, selectSeed, version]);
+
   useEffect(() => {
     invoke<VersionInfo[]>("version_catalog")
       .then((catalog) => {
@@ -98,6 +153,12 @@ export default function App() {
           if (newest) setVersion(newest.id);
         }
       })
+      .catch((cause: unknown) => setError(String(cause)));
+  }, []);
+
+  useEffect(() => {
+    invoke<KnownPortalSeed[]>("portal_seed_presets")
+      .then(setPortalSeeds)
       .catch((cause: unknown) => setError(String(cause)));
   }, []);
 
@@ -570,8 +631,16 @@ export default function App() {
                 <button type="button" className="btn-primary" onClick={() => void start()}>
                   Show seed on map
                 </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => void checkSeedRules()}
+                >
+                  Check against rules
+                </button>
                 <p className="rule-hint">
-                  Rules only apply when searching for new seeds.
+                  “Check against rules” runs the active rules on this single
+                  seed – useful for verifying a 12-eye portal seed.
                 </p>
               </div>
             ) : (
@@ -637,6 +706,8 @@ export default function App() {
               onChange={setRules}
               biomes={biomes}
               structures={structures}
+              portalSeeds={portalSeeds}
+              onUseSeed={usePortalSeed}
               disabled={running}
             />
           </section>

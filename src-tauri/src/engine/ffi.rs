@@ -100,4 +100,14 @@ extern "C" {
         out_x: *mut c_int,
         out_z: *mut c_int,
     ) -> c_int;
+
+    /// Best end portal eye state among the first `max_strongholds`.
+    pub fn sf_portal_eyes(
+        generator: *const c_void,
+        max_strongholds: c_int,
+        out_eyes: *mut c_int,
+        out_lit: *mut c_int,
+        out_x: *mut c_int,
+        out_z: *mut c_int,
+    ) -> c_int;
 }
