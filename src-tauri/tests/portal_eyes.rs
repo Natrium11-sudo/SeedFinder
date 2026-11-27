@@ -5,7 +5,7 @@
 //! detection honest when the vendored cubiomes fork changes.
 
 use seedfinder_lib::engine::generator::SeedGenerator;
-use seedfinder_lib::engine::rules::{evaluate, Rule, SurfaceCategory};
+use seedfinder_lib::engine::rules::{compile, evaluate, evaluate_compiled, Rule, SurfaceCategory};
 use seedfinder_lib::engine::version;
 
 const KNOWN_121: i64 = -2_627_568_906_264_457_629;
@@ -65,6 +65,32 @@ fn lower_eye_thresholds_find_seeds() {
         }
     }
     assert!(hits >= 3, "about 1 in 47 seeds has four or more eyes");
+}
+
+#[test]
+fn compiled_rules_match_direct_evaluation() {
+    let rules = [
+        Rule::SpawnBiome {
+            any_of: vec!["plains".into(), "forest".into()],
+        },
+        Rule::PortalEyes {
+            min_eyes: 4,
+            require_lit: false,
+            max_strongholds: 1,
+            radius: 0,
+        },
+        Rule::SpawnSurface {
+            category: SurfaceCategory::Grass,
+        },
+        Rule::IslandSpawn { radius: 512 },
+    ];
+    let compiled = compile(&rules);
+    for seed in 0..50 {
+        let gen = generator("1.21.4", seed);
+        let direct = evaluate(&gen, &rules).expect("direct evaluation");
+        let prepared = evaluate_compiled(&gen, &compiled).expect("compiled evaluation");
+        assert_eq!(direct.is_some(), prepared.is_some(), "seed {seed}");
+    }
 }
 
 #[test]

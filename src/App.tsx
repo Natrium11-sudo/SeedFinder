@@ -647,17 +647,21 @@ export default function App() {
               <div className="scan-settings">
                 <div className="field-row">
                   <label className="field">
-                    <span>Seeds to scan</span>
-                    <select
+                    <span>Seeds to scan (custom)</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1_000_000_000_000}
+                      step={1000}
                       value={maxSeeds}
-                      onChange={(event) => setMaxSeeds(Number(event.currentTarget.value))}
+                      onChange={(event) => {
+                        const raw = Number(event.currentTarget.value);
+                        if (Number.isFinite(raw)) {
+                          setMaxSeeds(Math.min(1_000_000_000_000, Math.max(1, Math.floor(raw))));
+                        }
+                      }}
                       disabled={running}
-                    >
-                      <option value={1000}>1.000</option>
-                      <option value={10_000}>10.000</option>
-                      <option value={100_000}>100.000</option>
-                      <option value={1_000_000}>1 Million</option>
-                    </select>
+                    />
                   </label>
                   <label className="field">
                     <span>Threads</span>
@@ -677,6 +681,26 @@ export default function App() {
                       disabled={running}
                     />
                   </label>
+                </div>
+
+                <div className="seed-presets" aria-label="Seed count presets">
+                  {[1_000, 10_000, 100_000, 1_000_000, 10_000_000, 100_000_000, 1_000_000_000].map(
+                    (count) => (
+                      <button
+                        key={count}
+                        type="button"
+                        className={maxSeeds === count ? "chip is-active" : "chip"}
+                        onClick={() => setMaxSeeds(count)}
+                        disabled={running}
+                      >
+                        {count >= 1_000_000_000
+                          ? `${count / 1_000_000_000} B`
+                          : count >= 1_000_000
+                            ? `${count / 1_000_000} M`
+                            : formatNumber(count)}
+                      </button>
+                    ),
+                  )}
                 </div>
 
                 <button

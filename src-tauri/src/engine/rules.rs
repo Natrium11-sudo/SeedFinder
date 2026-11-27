@@ -119,26 +119,49 @@ impl Evaluation {
 
 type Spawn = (i32, i32);
 
-/// Evaluates all active rules for the generator's current seed.
-///
-/// Returns `Ok(None)` as soon as one rule fails (early out), otherwise the
-/// collected hit data. An inactive rule list still resolves spawn and biome so
-/// the UI can show what it found.
+/// Rules prepared once per scan: inactive rules removed, the rest ordered by
+/// cost. Avoids allocating and sorting on every candidate seed.
+#[derive(Debug, Clone)]
+pub struct CompiledRules {
+    rules: Vec<Rule>,
+}
+
+#[must_use]
+pub fn compile(rules: &[Rule]) -> CompiledRules {
+    let mut rules: Vec<Rule> = rules
+        .iter()
+        .filter(|rule| rule.is_active())
+        .cloned()
+        .collect();
+    rules.sort_by_key(Rule::priority);
+    CompiledRules { rules }
+}
+
+/// Convenience wrapper for one-off evaluations (tests, single-seed checks).
 pub fn evaluate(
     generator: &SeedGenerator,
     rules: &[Rule],
 ) -> Result<Option<Evaluation>, EngineError> {
-    let active: Vec<&Rule> = rules.iter().filter(|rule| rule.is_active()).collect();
-    let mut order: Vec<usize> = (0..active.len()).collect();
-    order.sort_by_key(|&index| active[index].priority());
+    let compiled = compile(rules);
+    evaluate_compiled(generator, &compiled)
+}
 
+/// Evaluates prepared rules for the generator's current seed.
+///
+/// Returns `Ok(None)` as soon as one rule fails (early out), otherwise the
+/// collected hit data. An inactive rule list still resolves spawn and biome so
+/// the UI can show what it found.
+pub fn evaluate_compiled(
+    generator: &SeedGenerator,
+    compiled: &CompiledRules,
+) -> Result<Option<Evaluation>, EngineError> {
     let mut spawn: Option<Spawn> = None;
     let mut spawn_biome: Option<String> = None;
     let mut matched = Vec::new();
     let mut structures = Vec::new();
 
-    for index in order {
-        match active[index] {
+    for rule in &compiled.rules {
+        match rule {
             Rule::BiomeAt { x, z, any_of } => {
                 let id = generator.biome_at(
                     4,

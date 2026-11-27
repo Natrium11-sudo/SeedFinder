@@ -13,7 +13,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter};
 
 use super::generator::SeedGenerator;
-use super::rules::{self, Rule};
+use super::rules::{self, CompiledRules, Rule};
 use super::version::McVersion;
 use crate::events::SearchProgress;
 
@@ -52,6 +52,9 @@ pub fn start(app: AppHandle, plan: ScanPlan, stop: Arc<AtomicBool>, running: Arc
 
     let target = plan.max_seeds.max(1);
     let threads = plan.threads.clamp(1, 64);
+    // Compile once, not per seed: sorting and filtering cost add up over
+    // millions of candidates.
+    let compiled = Arc::new(rules::compile(&plan.rules));
     let start_seed = random_start();
     let checked = Arc::new(AtomicU64::new(0));
     let hits = Arc::new(AtomicU64::new(0));
@@ -63,7 +66,7 @@ pub fn start(app: AppHandle, plan: ScanPlan, stop: Arc<AtomicBool>, running: Arc
         let stop = stop.clone();
         let checked = checked.clone();
         let hits = hits.clone();
-        let rules = plan.rules.clone();
+        let compiled = compiled.clone();
         let version = plan.version;
 
         let spawned = thread::Builder::new()
@@ -94,7 +97,7 @@ pub fn start(app: AppHandle, plan: ScanPlan, stop: Arc<AtomicBool>, running: Arc
                     index = index.wrapping_add(stride);
 
                     generator.apply_seed(seed);
-                    match rules::evaluate(&generator, &rules) {
+                    match rules::evaluate_compiled(&generator, &compiled) {
                         Ok(Some(evaluation)) => {
                             let mut hit = evaluation.into_hit();
                             attach_thumbnail(&mut generator, &mut hit);
@@ -182,8 +185,9 @@ pub fn start(app: AppHandle, plan: ScanPlan, stop: Arc<AtomicBool>, running: Arc
 
 fn run_single(app: AppHandle, plan: ScanPlan, seed: i64, running: Arc<AtomicBool>) {
     let started = Instant::now();
+    let compiled = rules::compile(&plan.rules);
     let result = SeedGenerator::new(plan.version, seed).and_then(|generator| {
-        let evaluation = rules::evaluate(&generator, &plan.rules)?;
+        let evaluation = rules::evaluate_compiled(&generator, &compiled)?;
         Ok(evaluation)
     });
 
