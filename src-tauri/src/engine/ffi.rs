@@ -101,6 +101,17 @@ extern "C" {
         out_z: *mut c_int,
     ) -> c_int;
 
+    /// Top-down surface biomes for coarse grids (cubiomes ignores Y at 1:64).
+    pub fn sf_biome_grid_top(
+        ids: *mut c_int,
+        generator: *const c_void,
+        step: c_int,
+        x: c_int,
+        z: c_int,
+        w: c_int,
+        h: c_int,
+    ) -> c_int;
+
     /// Best end portal eye state among the first `max_strongholds`.
     pub fn sf_portal_eyes(
         generator: *const c_void,

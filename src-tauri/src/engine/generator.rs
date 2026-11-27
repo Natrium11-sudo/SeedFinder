@@ -422,6 +422,45 @@ impl SeedGenerator {
         Ok(ids)
     }
 
+    /// Top-down biome grid for coarse overview maps.
+    ///
+    /// `cubiomes::genBiomes()` at scale 1:64 ignores the vertical coordinate
+    /// on 1.18+ and can return cave biomes. This samples every cell centre at
+    /// the build limit instead, so surface views never show caves.
+    pub fn biome_grid_top(
+        &self,
+        step_blocks: u32,
+        origin_block_x: i32,
+        origin_block_z: i32,
+        width: u32,
+        height: u32,
+    ) -> Result<Vec<i32>, EngineError> {
+        if !matches!(step_blocks, 16 | 64) {
+            return Err(EngineError::InvalidGridScale(step_blocks));
+        }
+        let cells = (width as usize)
+            .checked_mul(height as usize)
+            .filter(|&cells| cells > 0)
+            .ok_or(EngineError::InvalidGridSize { width, height })?;
+        let mut ids = vec![-1i32; cells];
+        // SAFETY: generator is initialized; the output buffer holds w*h ids.
+        let result = unsafe {
+            ffi::sf_biome_grid_top(
+                ids.as_mut_ptr(),
+                self.generator.as_ptr(),
+                step_blocks as i32,
+                origin_block_x,
+                origin_block_z,
+                width as i32,
+                height as i32,
+            )
+        };
+        if result != 0 {
+            return Err(EngineError::BiomeGridFailed(result));
+        }
+        Ok(ids)
+    }
+
     /// Samples a biome grid at a native cubiomes scale and a fixed block `y`.
     ///
     /// The underground map layer uses this to reach cave biomes: their 3D

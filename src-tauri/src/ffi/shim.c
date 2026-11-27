@@ -149,6 +149,36 @@ int sf_biome_grid(int *ids, const void *gen, int scale, int x, int z, int w, int
     return sf_biome_grid_at(ids, gen, scale, x, surface, z, w, h);
 }
 
+/*
+ * Top-down surface biomes for a coarse overview map.
+ *
+ * `genBiomes()` at scale 1:64 ignores the vertical coordinate for 1.18+ and
+ * can return 3D cave biomes (dripstone/lush/deep dark) even when asked for a
+ * high Y. Sample each cell's centre individually at the build limit instead.
+ *
+ * `step` is the blocks-per-cell value (16 or 64), `x`/`z` are block
+ * coordinates of the area's north-west corner.
+ */
+int sf_biome_grid_top(int *ids, const void *gen, int step, int x, int z, int w, int h)
+{
+    const Generator *g = (const Generator *)gen;
+    if (g == NULL || ids == NULL || step <= 0 || w <= 0 || h <= 0)
+        return -1;
+
+    int surface = g->mc >= MC_1_18 ? 300 : 255;
+    int half = step / 2;
+    for (int j = 0; j < h; ++j) {
+        for (int i = 0; i < w; ++i) {
+            int bx = x + i * step + half;
+            int bz = z + j * step + half;
+            int id = getBiomeAt(g, 4, sf_floordiv(bx, 4),
+                sf_floordiv(surface, 4), sf_floordiv(bz, 4));
+            ids[j * w + i] = id;
+        }
+    }
+    return 0;
+}
+
 int sf_structure_supported(int mc, int type)
 {
     StructureConfig conf;

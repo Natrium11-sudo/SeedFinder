@@ -191,15 +191,11 @@ pub fn build(request: &PreviewRequest) -> Result<PreviewData, String> {
             )
         }
         // Coarse surface view: top of the world, hillshade skipped.
+        // `genBiomes()` at 1:64 can return cave biomes on 1.18+, so sample
+        // each cell centre at the build limit instead.
         (MapLayer::Surface, _) => {
             let grid = generator
-                .biome_grid(
-                    scale,
-                    origin_block_x.div_euclid(cell_scale),
-                    origin_block_z.div_euclid(cell_scale),
-                    cells,
-                    cells,
-                )
+                .biome_grid_top(scale, origin_block_x, origin_block_z, cells, cells)
                 .map_err(|err| err.to_string())?;
             (Vec::new(), grid, 0.0, 0.0, profile.surface_y)
         }
@@ -532,6 +528,24 @@ mod tests {
                 .any(|name| name.contains("caves") || *name == "deep_dark"),
             "surface layer leaked cave biomes: {names:?}"
         );
+    }
+
+    #[test]
+    fn coarse_surface_hides_cave_biomes() {
+        for scale in [16, 64] {
+            let data = build(&request(128, scale)).expect("coarse surface preview");
+            let names: Vec<&str> = data
+                .legend
+                .iter()
+                .map(|entry| entry.name.as_str())
+                .collect();
+            assert!(
+                !names
+                    .iter()
+                    .any(|name| name.contains("caves") || *name == "deep_dark"),
+                "1:{scale} surface layer leaked cave biomes: {names:?}"
+            );
+        }
     }
 
     #[test]
