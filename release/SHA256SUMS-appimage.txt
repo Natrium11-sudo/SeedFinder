@@ -1,1 +1,1 @@
-a532387d5ec190c7010b0cdbd41b211a0c701bce98976f8c5cbff345d88ee800  SeedFinder_0.2.0_amd64.AppImage
+4a062b56e6163ca7a068e6eb5cd89bb313d81a649064432248be7fdaf494a9d7  SeedFinder_0.2.1_amd64.AppImage

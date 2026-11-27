@@ -1,1 +1,1 @@
-dd590d862c3ecc0012ea426d565856554d4a5e2c69f795140253c599de9877bf  seedfinder-0.2.0-linux-x86_64.tar.gz
+a21671bb6d13fd4d126e4aaddd5ca635466608b9ec4a05cc1075ef06e2b62ac7  seedfinder-0.2.1-linux-x86_64.tar.gz
